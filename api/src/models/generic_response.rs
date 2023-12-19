@@ -37,3 +37,15 @@ impl GenericResponse {
         serde_json::to_string(&self).unwrap()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::models::generic_response::GenericResponse;
+    /// Test the `GenericResponse.to_json` method.
+    #[test]
+    fn test_to_json() {
+        let r = GenericResponse::new("something happened");
+
+        assert_eq!(*r.to_json(), *r#"{"message":"something happened"}"#)
+    }
+}

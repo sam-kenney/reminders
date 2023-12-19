@@ -8,7 +8,7 @@ use axum::routing::MethodRouter;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-/// Returns a router with all the routes for the reminders.
+/// Returns a router with all the request methods for the reminders.
 /// This is the entry point for the reminders routes.
 pub fn router() -> MethodRouter<Arc<RwLock<AppState>>> {
     axum::routing::get(self::get::get)
