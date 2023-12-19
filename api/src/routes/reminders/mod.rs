@@ -1,3 +1,4 @@
+//! Reminders endpoint routing.
 mod delete;
 mod get;
 mod post;
