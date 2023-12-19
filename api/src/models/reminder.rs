@@ -3,6 +3,21 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
 
+/// Return a string with the first letter capitalised.
+fn fix_case(s: &str) -> String {
+    s.chars()
+        .into_iter()
+        .enumerate()
+        .map(|(i, c)| {
+            if i == 0 {
+                c.to_uppercase().to_string()
+            } else {
+                c.to_string()
+            }
+        })
+        .collect()
+}
+
 /// Reminder model
 ///
 /// When serializing, the id field is skipped if it is None.
@@ -28,7 +43,7 @@ impl Reminder {
         json.into_iter()
             .map(|(id, content)| Reminder {
                 id: Some(id),
-                title: content["title"].as_str().unwrap_or("").to_string(),
+                title: fix_case(content["title"].as_str().unwrap_or("")),
                 due: content["due"].as_u64().unwrap_or(0),
             })
             .collect()
@@ -56,7 +71,7 @@ impl std::cmp::PartialEq for Reminder {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::reminder::Reminder;
+    use crate::models::reminder::{fix_case, Reminder};
     use std::collections::HashMap;
 
     /// Test whether the `Reminder::from_json` correctly interprets a Firebase response.
@@ -65,12 +80,12 @@ mod tests {
         let mut outer: HashMap<String, HashMap<String, serde_json::Value>> = HashMap::new();
         let mut inner: HashMap<String, serde_json::Value> = HashMap::new();
 
-        inner.insert("title".into(), "hello, world".into());
+        inner.insert("title".into(), "Hello, world".into());
         inner.insert("due".into(), 1234.into());
         outer.insert("abc".into(), inner);
 
         let r = vec![Reminder {
-            title: "hello, world".into(),
+            title: "Hello, world".into(),
             due: 1234,
             id: Some("abc".into()),
         }];
@@ -82,27 +97,37 @@ mod tests {
     #[test]
     fn test_serialising_with_no_id() {
         let r = Reminder {
-            title: "hello, world".into(),
+            title: "Hello, world".into(),
             due: 1234,
             id: None,
         };
 
         let json = serde_json::to_string(&r).unwrap();
 
-        assert_eq!(json, r#"{"title":"hello, world","due":1234}"#)
+        assert_eq!(json, r#"{"title":"Hello, world","due":1234}"#)
     }
 
     /// Test serialising a Reminder with an ID.
     #[test]
     fn test_serialising_with_id() {
         let r = Reminder {
-            title: "hello, world".into(),
+            title: "Hello, world".into(),
             due: 1234,
             id: Some("asdf".into()),
         };
 
         let json = serde_json::to_string(&r).unwrap();
 
-        assert_eq!(json, r#"{"id":"asdf","title":"hello, world","due":1234}"#)
+        assert_eq!(json, r#"{"id":"asdf","title":"Hello, world","due":1234}"#)
+    }
+
+    /// Test the fix_case function.
+    #[test]
+    fn test_fix_case() {
+        assert_eq!("Hello, world", fix_case("hello, world"));
+        assert_eq!("HELLO, WORLD", fix_case("HELLO, WORLD"));
+        assert_eq!("Hello, world", fix_case("Hello, world"));
+        assert_eq!("Hello, WORLD", fix_case("Hello, WORLD"));
+        assert_eq!("!hello, world", fix_case("!hello, world"));
     }
 }
