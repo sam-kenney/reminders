@@ -1,0 +1,15 @@
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "--network",
+        "cloudbuild",
+        "--file",
+        "Dockerfile",
+        "--tag",
+        "$_LOCATION-docker.pkg.dev/$_GOOGLE_CLOUD_PROJECT_ID/cloud-run-source-deploy/reminders-api",
+        ".",
+      ]
+images: [$_LOCATION-docker.pkg.dev/$_GOOGLE_CLOUD_PROJECT_ID/cloud-run-source-deploy/reminders-api]
+
