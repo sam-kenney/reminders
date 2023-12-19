@@ -6,14 +6,12 @@ use std::collections::HashMap;
 /// Return a string with the first letter capitalised.
 fn fix_case(s: &str) -> String {
     s.chars()
-        .into_iter()
         .enumerate()
         .map(|(i, c)| {
             if i == 0 {
-                c.to_uppercase().to_string()
-            } else {
-                c.to_string()
+                return c.to_uppercase().to_string();
             }
+            c.to_string()
         })
         .collect()
 }
