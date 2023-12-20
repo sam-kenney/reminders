@@ -39,6 +39,7 @@ class _AddReminderState extends State<AddReminder> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Reminder'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
       ),
       body: Form(
         key: _formKey,
@@ -71,7 +72,6 @@ class _AddReminderState extends State<AddReminder> {
                       onPressed: () => _selectDate(context),
                       icon: const Icon(Icons.calendar_today),
                       tooltip: 'Select due date',
-                      hoverColor: Colors.pink.shade100,
                     )
                   ],
                 ),

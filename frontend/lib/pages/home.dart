@@ -43,7 +43,6 @@ class _HomeState extends State<Home> {
       subtitle: Text(_reminders[index].dueDateFmt),
       trailing: IconButton(
         icon: const Icon(Icons.check),
-        hoverColor: Colors.pink.shade100,
         onPressed: () => reminders.delete(_reminders[index]).then(
               (_) => _getReminders(),
             ),
