@@ -23,10 +23,27 @@ class _AddReminderState extends State<AddReminder> {
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
-        context: context,
-        initialDate: selectedDate,
-        firstDate: DateTime(2015, 8),
-        lastDate: DateTime(2101));
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2015, 8),
+      lastDate: DateTime(2101),
+      helpText: 'Select due date',
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.dark().copyWith(
+            primaryColor: const Color.fromARGB(232, 231, 105, 29),
+            colorScheme: ColorScheme.fromSwatch(
+              primarySwatch: Colors.orange,
+              accentColor: const Color.fromARGB(232, 231, 105, 29),
+              backgroundColor: Theme.of(context).colorScheme.background,
+              cardColor: Theme.of(context).colorScheme.background,
+              brightness: Theme.of(context).brightness,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
     if (picked != null && picked != selectedDate) {
       setState(() {
         selectedDate = picked;
@@ -39,7 +56,7 @@ class _AddReminderState extends State<AddReminder> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Reminder'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: const Color.fromARGB(232, 231, 105, 29),
       ),
       body: Form(
         key: _formKey,
@@ -75,25 +92,31 @@ class _AddReminderState extends State<AddReminder> {
                     )
                   ],
                 ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState == null) {
-                      return;
-                    } else if (_formKey.currentState!.validate()) {
-                      final reminder = Reminder(
-                        title: _titleController.text,
-                        due: selectedDate.millisecondsSinceEpoch ~/ 1000,
-                      );
-                      reminders.create(reminder).then((_) {
-                        Navigator.pop(context);
-                      });
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(200, 60),
+                const SizedBox(height: 250),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState == null) {
+                        return;
+                      } else if (_formKey.currentState!.validate()) {
+                        final due = DateTime(selectedDate.year,
+                            selectedDate.month, selectedDate.day);
+
+                        final reminder = Reminder(
+                          title: _titleController.text,
+                          due: due.millisecondsSinceEpoch ~/ 1000,
+                        );
+                        reminders.create(reminder).then((_) {
+                          Navigator.pop(context);
+                        });
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(200, 60),
+                      foregroundColor: const Color.fromARGB(232, 231, 105, 29),
+                    ),
+                    child: const Text('Submit'),
                   ),
-                  child: const Text('Submit'),
                 ),
               ],
             ),

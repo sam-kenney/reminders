@@ -1,5 +1,6 @@
 //! Main entry point for the API.
 mod firebase;
+mod middleware;
 mod models;
 mod routes;
 mod util;
@@ -23,17 +24,15 @@ async fn main() {
 
     let firebase = Firebase::new().await;
 
-    let db = match firebase {
-        Ok(db) => db,
-        Err(e) => {
-            log::error!("{e}");
-            return;
-        }
-    };
+    let db = firebase.unwrap_or_else(|e| {
+        log::error!("{:?}", e);
+        std::process::exit(1);
+    });
 
     let state = Arc::new(RwLock::new(AppState { db }));
     let app = Router::new()
-        .route("/reminders/", routes::reminders::router())
+        .route("/reminders/v2/", routes::reminders::v2::router())
+        .route_layer(axum::middleware::from_fn(middleware::auth::auth))
         .with_state(state)
         .layer(tower_http::trace::TraceLayer::new_for_http());
 

@@ -5,7 +5,7 @@ use crate::models::{generic_response::GenericResponse, reminder::Reminder};
 use crate::SharedState;
 use axum::{
     extract::{self, State},
-    http,
+    http::{self, StatusCode},
     response::{self, IntoResponse, Response},
 };
 
@@ -21,14 +21,14 @@ pub async fn delete(
     if reminder.id.is_none() {
         let error = GenericResponse::new("Missing reminder id");
         return http::response::Builder::new()
-            .status(400)
+            .status(StatusCode::BAD_REQUEST)
             .body(response::Json(error).into_response().into_body())
             .unwrap();
     }
 
     let mut db = state.write().await.db.clone();
 
-    let path = format!("reminders/{}", reminder.id.clone().unwrap());
+    let path = format!("reminders/v2/{}", reminder.id.clone().unwrap());
 
     let resp = db.delete(path.as_str()).await;
 

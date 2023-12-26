@@ -5,7 +5,7 @@ use crate::models::{generic_response::GenericResponse, reminder::Reminder};
 use crate::SharedState;
 use axum::{
     extract::{self, State},
-    http,
+    http::{self, StatusCode},
     response::{self, IntoResponse, Response},
 };
 
@@ -19,11 +19,11 @@ pub async fn post(
     extract::Json(reminder): extract::Json<Reminder>,
 ) -> Response {
     let mut db = state.write().await.db.clone();
-    let resp = db.post("reminders", reminder).await;
+    let resp = db.post("reminders/v2", reminder).await;
 
     match resp {
         Ok(_) => http::response::Builder::new()
-            .status(201)
+            .status(StatusCode::CREATED)
             .body(
                 response::Json(GenericResponse::new("Created reminder").to_json())
                     .into_response()

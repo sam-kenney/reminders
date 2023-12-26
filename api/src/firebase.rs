@@ -201,6 +201,15 @@ impl Firebase {
         }
     }
 
+    /// Delete a record in Firebase.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - The path to the data.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if authentication fails or if the data is not found.
     pub async fn delete(&mut self, path: &str) -> Result<(), FirebaseError> {
         self.refresh().await?;
 

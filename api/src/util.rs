@@ -10,7 +10,7 @@ pub fn init_logger() {
         .with_target("tower_http::trace::make_span", Level::DEBUG)
         .with_default(Level::INFO);
 
-    let tracing_layer = tracing_subscriber::fmt::layer().with_ansi(false);
+    let tracing_layer = tracing_subscriber::fmt::layer();
 
     tracing_subscriber::registry()
         .with(tracing_layer)

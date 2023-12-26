@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:reminders/pages/home.dart';
 
+const orange = Color.fromARGB(232, 231, 105, 29);
+
 void main() {
   runApp(const App());
 }
@@ -13,7 +15,7 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: 'Reminders',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.pink),
+        colorScheme: ColorScheme.fromSeed(seedColor: orange),
         useMaterial3: true,
       ),
       darkTheme: ThemeData.dark(),

@@ -17,7 +17,7 @@ use std::collections::HashMap;
 /// A JSON response with all reminders.
 pub async fn get(State(state): State<SharedState>) -> Response {
     let mut db = state.read().await.db.clone();
-    let resp = db.get("reminders").await;
+    let resp = db.get("reminders/v2").await;
 
     let res_json: Result<HashMap<String, HashMap<String, Value>>, reqwest::Error> = match resp {
         Ok(d) => d.json().await,
