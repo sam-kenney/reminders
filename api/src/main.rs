@@ -31,12 +31,12 @@ async fn main() {
 
     let state = Arc::new(RwLock::new(AppState { db }));
     let app = Router::new()
+        .fallback(routes::err_404::handle_404)
         .route("/reminders/v2/", routes::reminders::v2::router())
         .route_layer(axum::middleware::from_fn(middleware::auth::auth))
         .with_state(state)
         .layer(tower_http::trace::TraceLayer::new_for_http());
 
-    let app = app.fallback(routes::err_404::handle_404);
     let listener = tokio::net::TcpListener::bind("0.0.0.0:9999").await.unwrap();
 
     log::info!("listening on http://{}", listener.local_addr().unwrap());

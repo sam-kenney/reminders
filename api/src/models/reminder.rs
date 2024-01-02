@@ -16,6 +16,27 @@ fn fix_case(s: &str) -> String {
         .collect()
 }
 
+pub fn reminders_to_firebase(reminders: Vec<Reminder>) -> HashMap<String, HashMap<String, Value>> {
+    reminders
+        .into_iter()
+        .map(|r| {
+            let mut inner: HashMap<String, Value> = HashMap::new();
+
+            let assignee = match r.assignee {
+                Some(a) => Value::String(a.into()),
+                None => Value::Null,
+            };
+
+            inner.insert("title".into(), Value::String(r.title));
+            inner.insert("due".into(), Value::Number(r.due.into()));
+            inner.insert("priority".into(), Value::Number(r.priority.into()));
+            inner.insert("assignee".into(), assignee);
+
+            (r.id.unwrap_or_default(), inner)
+        })
+        .collect()
+}
+
 /// Reminder model
 ///
 /// When serializing, the id field is skipped if it is None.
@@ -25,6 +46,8 @@ pub struct Reminder {
     pub id: Option<String>,
     pub title: String,
     pub due: u64,
+    pub priority: u64,
+    pub assignee: Option<String>,
 }
 
 impl Reminder {
@@ -43,6 +66,11 @@ impl Reminder {
                 id: Some(id),
                 title: fix_case(content["title"].as_str().unwrap_or("")),
                 due: content["due"].as_u64().unwrap_or(0),
+                priority: content["priority"].as_u64().unwrap_or(0),
+                assignee: match content.get("assignee") {
+                    None => None,
+                    Some(a) => Some(a.to_string().replace('"', "")),
+                },
             })
             .collect()
     }
@@ -80,12 +108,16 @@ mod tests {
 
         inner.insert("title".into(), "Hello, world".into());
         inner.insert("due".into(), 1234.into());
+        inner.insert("priority".into(), 0.into());
+        inner.insert("assignee".into(), serde_json::Value::Null);
         outer.insert("abc".into(), inner);
 
         let r = vec![Reminder {
             title: "Hello, world".into(),
             due: 1234,
             id: Some("abc".into()),
+            priority: 0,
+            assignee: None,
         }];
 
         assert_eq!(r, Reminder::from_json(outer))
@@ -98,11 +130,16 @@ mod tests {
             title: "Hello, world".into(),
             due: 1234,
             id: None,
+            priority: 0,
+            assignee: Some("Sam".into()),
         };
 
         let json = serde_json::to_string(&r).unwrap();
 
-        assert_eq!(json, r#"{"title":"Hello, world","due":1234}"#)
+        assert_eq!(
+            json,
+            r#"{"title":"Hello, world","due":1234,"priority":0,"assignee":"Sam"}"#
+        )
     }
 
     /// Test serialising a Reminder with an ID.
@@ -112,11 +149,16 @@ mod tests {
             title: "Hello, world".into(),
             due: 1234,
             id: Some("asdf".into()),
+            priority: 0,
+            assignee: None,
         };
 
         let json = serde_json::to_string(&r).unwrap();
 
-        assert_eq!(json, r#"{"id":"asdf","title":"Hello, world","due":1234}"#)
+        assert_eq!(
+            json,
+            r#"{"id":"asdf","title":"Hello, world","due":1234,"priority":0,"assignee":null}"#
+        )
     }
 
     /// Test the fix_case function.

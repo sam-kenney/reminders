@@ -40,21 +40,13 @@ impl Firebase {
     ///
     /// Returns an error if the FIREBASE_URI environment variable is not set or if authentication fails.
     pub async fn new() -> Result<Self, FirebaseError> {
-        let uri = std::env::var("FIREBASE_URI");
-        let token = Firebase::get_token().await;
-
-        if uri.is_err() {
-            return Err(FirebaseError::URINotSet);
-        }
-
-        if token.is_err() {
-            return Err(FirebaseError::Authentication);
-        }
+        let uri = std::env::var("FIREBASE_URI").map_err(|_| FirebaseError::URINotSet)?;
+        let token = Firebase::get_token().await?;
 
         Ok(Self {
-            token: token.unwrap(),
+            token,
             client: reqwest::Client::new(),
-            uri: uri.unwrap(),
+            uri,
         })
     }
 
@@ -64,19 +56,15 @@ impl Firebase {
     ///
     /// Returns an error if authentication fails.
     async fn get_token() -> Result<Token, FirebaseError> {
-        let token = AuthenticationManager::new()
+        AuthenticationManager::new()
             .await
             .unwrap()
             .get_token(&[
                 "https://www.googleapis.com/auth/firebase.database",
                 "https://www.googleapis.com/auth/userinfo.email",
             ])
-            .await;
-
-        match token {
-            Ok(t) => Ok(t),
-            Err(_) => Err(FirebaseError::Authentication),
-        }
+            .await
+            .map_err(|_| FirebaseError::Authentication)
     }
 
     /// Refresh the Firebase token.
@@ -111,16 +99,11 @@ impl Firebase {
             .get(url)
             .bearer_auth(self.token.as_str())
             .send()
-            .await;
+            .await
+            .map_err(|_| FirebaseError::Authentication)?;
 
-        if response.is_err() {
-            return Err(FirebaseError::Authentication);
-        }
-
-        let res = response.unwrap();
-
-        match res.status().is_success() {
-            true => Ok(res),
+        match response.status().is_success() {
+            true => Ok(response),
             false => Err(FirebaseError::NotFound),
         }
     }
@@ -149,15 +132,10 @@ impl Firebase {
             .bearer_auth(self.token.as_str())
             .json(&data)
             .send()
-            .await;
+            .await
+            .map_err(|_| FirebaseError::Authentication)?;
 
-        if response.is_err() {
-            return Err(FirebaseError::Authentication);
-        }
-
-        let res = response.unwrap();
-
-        match res.status().is_success() {
+        match response.status().is_success() {
             true => Ok(()),
             false => Err(FirebaseError::PostData),
         }
@@ -187,15 +165,10 @@ impl Firebase {
             .bearer_auth(self.token.as_str())
             .json(&data)
             .send()
-            .await;
+            .await
+            .map_err(|_| FirebaseError::Authentication)?;
 
-        if response.is_err() {
-            return Err(FirebaseError::Authentication);
-        }
-
-        let res = response.unwrap();
-
-        match res.status().is_success() {
+        match response.status().is_success() {
             true => Ok(()),
             false => Err(FirebaseError::PostData),
         }
@@ -220,15 +193,10 @@ impl Firebase {
             .delete(url)
             .bearer_auth(self.token.as_str())
             .send()
-            .await;
+            .await
+            .map_err(|_| FirebaseError::Authentication)?;
 
-        if response.is_err() {
-            return Err(FirebaseError::Authentication);
-        }
-
-        let res = response.unwrap();
-
-        match res.status().is_success() {
+        match response.status().is_success() {
             true => Ok(()),
             false => Err(FirebaseError::DeleteData),
         }

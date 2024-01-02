@@ -1,6 +1,7 @@
 //! Reminders endpoint routing.
 mod delete;
 mod get;
+mod patch;
 mod post;
 mod put;
 use crate::AppState;
@@ -14,5 +15,6 @@ pub fn router() -> MethodRouter<Arc<RwLock<AppState>>> {
     axum::routing::get(self::get::get)
         .post(self::post::post)
         .put(self::put::put)
+        .patch(self::patch::patch)
         .delete(self::delete::delete)
 }
