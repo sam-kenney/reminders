@@ -12,11 +12,15 @@ class Reminder {
   String? id;
   String title;
   int due;
+  int priority;
+  String? assignee;
 
   Reminder({
     this.id,
     required this.title,
     required this.due,
+    required this.priority,
+    this.assignee,
   });
 
   DateTime get dueDate =>
@@ -26,7 +30,7 @@ class Reminder {
 
   Text subtitle(BuildContext context) {
     return Text(
-      dueDateFmt,
+      "$dueDateFmt ${assignee != null ? '- $assignee' : ''}",
       style: TextStyle(
         color: dueDate.isBefore(today())
             ? Colors.red
@@ -38,11 +42,23 @@ class Reminder {
   Reminder.fromJson(Map<String, dynamic> json)
       : id = json['id'],
         title = json['title'],
-        due = json['due'];
+        due = json['due'],
+        priority = json['priority'],
+        assignee = json['assignee'];
+
+  Map<String, Object?> toMap() => {
+        'id': id,
+        'title': title,
+        'due': due,
+        'priority': priority,
+        'assignee': assignee,
+      };
 
   String toJson() => jsonEncode({
         'id': id,
         'title': title,
         'due': due,
+        'priority': priority,
+        'assignee': assignee,
       });
 }

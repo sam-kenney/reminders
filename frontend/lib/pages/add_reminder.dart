@@ -19,6 +19,7 @@ class _AddReminderState extends State<AddReminder> {
 
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
+  final _dropdownController = TextEditingController();
   DateTime selectedDate = DateTime.now();
 
   Future<void> _selectDate(BuildContext context) async {
@@ -92,7 +93,28 @@ class _AddReminderState extends State<AddReminder> {
                     )
                   ],
                 ),
-                const SizedBox(height: 250),
+                const SizedBox(height: 50),
+                DropdownButtonFormField(
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Ash',
+                      child: Text('Ash'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'Sam',
+                      child: Text('Sam'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _dropdownController.text = value.toString();
+                    });
+                  },
+                  value: _dropdownController.text.isEmpty
+                      ? null
+                      : _dropdownController.text,
+                ),
+                const SizedBox(height: 200),
                 Center(
                   child: ElevatedButton(
                     onPressed: () {
@@ -105,6 +127,10 @@ class _AddReminderState extends State<AddReminder> {
                         final reminder = Reminder(
                           title: _titleController.text,
                           due: due.millisecondsSinceEpoch ~/ 1000,
+                          priority: 1000,
+                          assignee: _dropdownController.text.isEmpty
+                              ? null
+                              : _dropdownController.text,
                         );
                         reminders.create(reminder).then((_) {
                           Navigator.pop(context);

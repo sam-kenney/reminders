@@ -17,6 +17,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final _confetti = ConfettiController(duration: const Duration(seconds: 2));
   List<Reminder> _reminders = [];
+  List<Reminder> _allReminders = [];
   bool _callingApi = false;
   bool _authorized = true;
   bool _all = false;
@@ -30,8 +31,12 @@ class _HomeState extends State<Home> {
       List<Reminder> r = await reminders.get();
 
       r.sort((a, b) {
-        int cmp = a.dueDate.compareTo(b.dueDate);
-        if (cmp != 0) return cmp;
+        int pCmp = a.priority.compareTo(b.priority);
+        if (pCmp != 0) return pCmp;
+
+        int dCmp = a.dueDate.compareTo(b.dueDate);
+        if (dCmp != 0) return dCmp;
+
         return a.title.compareTo(b.title);
       });
 
@@ -39,6 +44,10 @@ class _HomeState extends State<Home> {
         final t = today();
         return (e.dueDate.isBefore(t) || e.dueDate == t);
       }).toList();
+
+      setState(() {
+        _allReminders = r;
+      });
 
       if (!_all) {
         r = todayToDo;
@@ -65,10 +74,16 @@ class _HomeState extends State<Home> {
 
   Widget _buildReminder(BuildContext context, int index) {
     return ListTile(
+      key: Key(_reminders[index].id!),
       title: Text(_reminders[index].title),
       subtitle: _reminders[index].subtitle(context),
       trailing: IconButton(
         icon: const Icon(Icons.check),
+        style: ButtonStyle(
+          padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+            const EdgeInsets.fromLTRB(20, 0, 20, 0),
+          ),
+        ),
         onPressed: () {
           _confetti.play();
           final Reminder r = _reminders[index];
@@ -82,10 +97,26 @@ class _HomeState extends State<Home> {
   }
 
   Widget _buildReminders(BuildContext context) {
-    return ListView.builder(
+    return ReorderableListView.builder(
       itemCount: _reminders.length,
       itemBuilder: (BuildContext context, int index) {
         return _buildReminder(context, index);
+      },
+      onReorder: (oldIndex, newIndex) {
+        setState(() {
+          if (newIndex > oldIndex) {
+            newIndex -= 1;
+          }
+          Reminder r = _reminders.removeAt(oldIndex);
+          _reminders.insert(newIndex, r);
+
+          for (int i = 0; i < _reminders.length; i++) {
+            _reminders[i].priority = i;
+            _allReminders[_allReminders.indexOf(_reminders[i])].priority = i;
+          }
+
+          reminders.update(_allReminders);
+        });
       },
     );
   }

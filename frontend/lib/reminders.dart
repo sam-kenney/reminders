@@ -14,9 +14,6 @@ class RemindersApiNotAuthorizedException implements Exception {}
 Future<Uri> get url async {
   final info = await PackageInfo.fromPlatform();
   final version = info.version.split(".").first;
-  if (version == "1") {
-    return Uri.parse('$baseurl/reminders/');
-  }
   return Uri.parse('$baseurl/reminders/v$version/');
 }
 
@@ -54,6 +51,27 @@ Future<List<Reminder>> get() async {
   }
 
   return [];
+}
+
+Future<void> update(List<Reminder> reminders) async {
+  final response = await http.patch(
+    await url,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $accessToken',
+    },
+    body: jsonEncode(reminders.map((element) {
+      return element.toMap();
+    }).toList()),
+  );
+
+  if (response.statusCode == 401) {
+    throw RemindersApiNotAuthorizedException();
+  }
+
+  if (response.statusCode != 200) {
+    throw Exception('Failed to update reminder. ${response.statusCode}');
+  }
 }
 
 Future<void> delete(Reminder reminder) async {

@@ -19,7 +19,7 @@ class App extends StatelessWidget {
         useMaterial3: true,
       ),
       darkTheme: ThemeData.dark(),
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.dark,
       home: const Home(title: 'Reminders'),
     );
   }
