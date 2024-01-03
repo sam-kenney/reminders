@@ -920,7 +920,7 @@ dependencies = [
 
 [[package]]
 name = "reminders"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "axum",
  "gcp_auth",

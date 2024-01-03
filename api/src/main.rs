@@ -25,7 +25,7 @@ async fn main() {
     let firebase = Firebase::new().await;
 
     let db = firebase.unwrap_or_else(|e| {
-        log::error!("{:?}", e);
+        log::error!("{}", e);
         std::process::exit(1);
     });
 
