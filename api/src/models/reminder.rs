@@ -69,8 +69,11 @@ impl Reminder {
                 priority: content["priority"].as_u64().unwrap_or(0),
                 assignee: match content.get("assignee") {
                     None => None,
-                    Some(a) => Some(a.to_string().replace('"', "")),
-                },
+                    Some(value) => match value {
+                        Value::String(_) => Some(value.as_str().expect("Not a string").to_string()),
+                        _ => None,
+                    }
+                }
             })
             .collect()
     }
@@ -121,6 +124,29 @@ mod tests {
         }];
 
         assert_eq!(r, Reminder::from_json(outer))
+    }
+
+    #[test]
+    fn test_from_json_invalid_assignee() {
+        let mut outer: HashMap<String, HashMap<String, serde_json::Value>> = HashMap::new();
+        let mut inner: HashMap<String, serde_json::Value> = HashMap::new();
+
+        inner.insert("title".into(), "Hello, world".into());
+        inner.insert("due".into(), 1234.into());
+        inner.insert("priority".into(), 0.into());
+        inner.insert("assignee".into(), 123.into());
+        outer.insert("abc".into(), inner);
+
+        let r = vec![Reminder {
+            title: "Hello, world".into(),
+            due: 1234,
+            id: Some("abc".into()),
+            priority: 0,
+            assignee: None,
+        }];
+
+        assert_eq!(r, Reminder::from_json(outer))
+
     }
 
     /// Test that a Reminder serialises properly when no ID is set.

@@ -32,12 +32,9 @@ pub async fn get(State(state): State<SharedState>) -> Response {
         Ok(d) => d,
         Err(_) => {
             log::warn!("No reminders in firebase");
-            let reminders: Vec<Reminder> = vec![];
-            return response::Json(reminders).into_response();
+            return response::Json(vec![] as Vec<Reminder>).into_response();
         }
     };
 
-    let reminders: Vec<Reminder> = Reminder::from_json(data);
-
-    response::Json(reminders).into_response()
+    response::Json(Reminder::from_json(data)).into_response()
 }
