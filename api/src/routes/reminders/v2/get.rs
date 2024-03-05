@@ -1,7 +1,7 @@
 //! Get method
 //!
 //! This module contains the get method for the reminders API.
-use crate::models::{generic_response::ResponseMessage, reminder::Reminder};
+use crate::models::{reminder::Reminder, result::Result};
 use crate::SharedState;
 use axum::{
     extract::State,
@@ -10,30 +10,16 @@ use axum::{
 use serde_json::Value;
 use std::collections::HashMap;
 
+type RawReminder = HashMap<String, HashMap<String, Value>>;
+
 /// Get all reminders.
 ///
 /// # Returns
 ///
 /// A JSON response with all reminders.
-pub async fn get(State(state): State<SharedState>) -> Response {
+pub async fn get(State(state): State<SharedState>) -> Result<Response> {
     let mut db = state.read().await.db.clone();
-    let resp = db.get("reminders/v2").await;
+    let data: RawReminder = db.get("reminders/v2").await?;
 
-    let res_json: Result<HashMap<String, HashMap<String, Value>>, reqwest::Error> = match resp {
-        Ok(d) => d.json().await,
-        Err(e) => {
-            log::error!("{:?}", e);
-            return ResponseMessage::from(e).into_response();
-        }
-    };
-
-    let data = match res_json {
-        Ok(d) => d,
-        Err(_) => {
-            log::warn!("No reminders in firebase");
-            return response::Json(vec![] as Vec<Reminder>).into_response();
-        }
-    };
-
-    response::Json(Reminder::from_json(data)).into_response()
+    Ok(response::Json(Reminder::from_json(data)).into_response())
 }

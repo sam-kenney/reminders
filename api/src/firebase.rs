@@ -1,5 +1,6 @@
 //! Interface with Firebase.
-use axum::response::IntoResponse;
+use axum::{response::IntoResponse, http::StatusCode};
+use crate::models::generic_response::ResponseMessage;
 use gcp_auth::{AuthenticationManager, Token};
 
 /// Errors that can occur when interfacing with Firebase.
@@ -33,7 +34,18 @@ impl std::fmt::Display for Error {
 impl std::convert::From<Error> for axum::response::Response {
     fn from(value: Error) -> Self {
         log::error!("{value}");
-        crate::models::generic_response::ResponseMessage::from(value).into_response()
+        match value {
+            Error::NotFound => {
+                ResponseMessage::from(value)
+                    .with_status(StatusCode::NOT_FOUND)
+                    .into_response()
+            }
+            _ => {
+                ResponseMessage::from(value)
+                    .with_status(StatusCode::INTERNAL_SERVER_ERROR)
+                    .into_response()
+            }
+        }
     }
 }
 
@@ -101,7 +113,7 @@ impl Firebase {
     /// # Errors
     ///
     /// Returns an error if authentication fails or if the data is not found.
-    pub async fn get(&mut self, path: &str) -> Result<reqwest::Response> {
+    pub async fn get<T: serde::de::DeserializeOwned>(&mut self, path: &str) -> Result<T> {
         self.refresh().await?;
 
         let url = format!("{}{}.json", &self.uri, path);
@@ -114,10 +126,12 @@ impl Firebase {
             .await
             .map_err(|_| Error::Authentication)?;
 
-        match response.status().is_success() {
-            true => Ok(response),
-            false => Err(Error::NotFound),
-        }
+        let res = match response.status().is_success() {
+            true => response,
+            false => return Err(Error::NotFound),
+        };
+
+        res.json().await.map_err(|_| Error::NotFound)
     }
 
     /// Post data to Firebase.
