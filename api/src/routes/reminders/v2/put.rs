@@ -1,12 +1,12 @@
 //! Put method
 //!
 //! This module contains the put method for the reminders API.
-use crate::models::{generic_response::GenericResponse, reminder::Reminder};
+use crate::models::{generic_response::ResponseMessage, reminder::Reminder, result::Result};
 use crate::SharedState;
 use axum::{
     extract::{self, State},
-    http::{self, StatusCode},
-    response::{self, IntoResponse, Response},
+    http::StatusCode,
+    response::{IntoResponse, Response},
 };
 
 // Update a reminder.
@@ -17,13 +17,11 @@ use axum::{
 pub async fn put(
     State(state): State<SharedState>,
     extract::Json(mut reminder): extract::Json<Reminder>,
-) -> Response {
+) -> Result<Response> {
     if reminder.id.is_none() {
-        let error = GenericResponse::new("Missing reminder id");
-        return http::response::Builder::new()
-            .status(StatusCode::BAD_REQUEST)
-            .body(response::Json(error).into_response().into_body())
-            .unwrap();
+        return Err(ResponseMessage::from("Reminder is missing the id field")
+            .with_status(StatusCode::BAD_REQUEST)
+            .into_response());
     }
 
     let mut db = state.write().await.db.clone();
@@ -32,12 +30,5 @@ pub async fn put(
     reminder.id = None;
     let resp = db.put(path.as_str(), reminder).await;
 
-    match resp {
-        Ok(_) => response::Json(GenericResponse::new("Updated reminder")).into_response(),
-        Err(e) => {
-            log::error!("{:?}", e);
-            let error = GenericResponse::from_string(e.to_string());
-            response::Json(error).into_response()
-        }
-    }
+    Ok(resp.map(|_| ResponseMessage::from("Updated reminder").into_response())?)
 }

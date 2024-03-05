@@ -1,9 +1,9 @@
 //! Main entry point for the API.
 mod firebase;
+mod logger;
 mod middleware;
 mod models;
 mod routes;
-mod util;
 use axum::Router;
 use firebase::Firebase;
 use std::sync::Arc;
@@ -20,7 +20,7 @@ pub struct AppState {
 /// Entry point.
 #[tokio::main]
 async fn main() {
-    util::init_logger();
+    logger::init();
 
     let firebase = Firebase::new().await;
 

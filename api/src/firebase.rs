@@ -1,9 +1,10 @@
 //! Interface with Firebase.
+use axum::response::IntoResponse;
 use gcp_auth::{AuthenticationManager, Token};
 
 /// Errors that can occur when interfacing with Firebase.
 #[derive(Debug)]
-pub enum FirebaseError {
+pub enum Error {
     URINotSet,
     Authentication,
     NotFound,
@@ -11,17 +12,28 @@ pub enum FirebaseError {
     DeleteData,
 }
 
+type Result<T> = std::result::Result<T, Error>;
+
+impl std::error::Error for Error {}
+
 /// Allow FirebaseError to be displayed.
-impl std::fmt::Display for FirebaseError {
+impl std::fmt::Display for Error {
     /// Display FirebaseError.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            FirebaseError::URINotSet => write!(f, "FIREBASE_URI not set"),
-            FirebaseError::Authentication => write!(f, "Authentication error"),
-            FirebaseError::NotFound => write!(f, "Not found"),
-            FirebaseError::PostData => write!(f, "Error posting data"),
-            FirebaseError::DeleteData => write!(f, "Error deleting data"),
+            Error::URINotSet => write!(f, "FIREBASE_URI not set"),
+            Error::Authentication => write!(f, "Authentication error"),
+            Error::NotFound => write!(f, "Not found"),
+            Error::PostData => write!(f, "Error posting data"),
+            Error::DeleteData => write!(f, "Error deleting data"),
         }
+    }
+}
+
+impl std::convert::From<Error> for axum::response::Response {
+    fn from(value: Error) -> Self {
+        log::error!("{value}");
+        crate::models::generic_response::ResponseMessage::from(value).into_response()
     }
 }
 
@@ -39,8 +51,8 @@ impl Firebase {
     /// # Errors
     ///
     /// Returns an error if the FIREBASE_URI environment variable is not set or if authentication fails.
-    pub async fn new() -> Result<Self, FirebaseError> {
-        let uri = std::env::var("FIREBASE_URI").map_err(|_| FirebaseError::URINotSet)?;
+    pub async fn new() -> Result<Self> {
+        let uri = std::env::var("FIREBASE_URI").map_err(|_| Error::URINotSet)?;
         let token = Firebase::get_token().await?;
 
         Ok(Self {
@@ -55,7 +67,7 @@ impl Firebase {
     /// # Errors
     ///
     /// Returns an error if authentication fails.
-    async fn get_token() -> Result<Token, FirebaseError> {
+    async fn get_token() -> Result<Token> {
         AuthenticationManager::new()
             .await
             .unwrap()
@@ -64,7 +76,7 @@ impl Firebase {
                 "https://www.googleapis.com/auth/userinfo.email",
             ])
             .await
-            .map_err(|_| FirebaseError::Authentication)
+            .map_err(|_| Error::Authentication)
     }
 
     /// Refresh the Firebase token.
@@ -72,7 +84,7 @@ impl Firebase {
     /// # Errors
     ///
     /// Returns an error if authentication fails.
-    async fn refresh(&mut self) -> Result<(), FirebaseError> {
+    async fn refresh(&mut self) -> Result<()> {
         if self.token.has_expired() {
             self.token = Firebase::get_token().await?;
         }
@@ -89,7 +101,7 @@ impl Firebase {
     /// # Errors
     ///
     /// Returns an error if authentication fails or if the data is not found.
-    pub async fn get(&mut self, path: &str) -> Result<reqwest::Response, FirebaseError> {
+    pub async fn get(&mut self, path: &str) -> Result<reqwest::Response> {
         self.refresh().await?;
 
         let url = format!("{}{}.json", &self.uri, path);
@@ -100,11 +112,11 @@ impl Firebase {
             .bearer_auth(self.token.as_str())
             .send()
             .await
-            .map_err(|_| FirebaseError::Authentication)?;
+            .map_err(|_| Error::Authentication)?;
 
         match response.status().is_success() {
             true => Ok(response),
-            false => Err(FirebaseError::NotFound),
+            false => Err(Error::NotFound),
         }
     }
 
@@ -118,7 +130,7 @@ impl Firebase {
     /// # Errors
     ///
     /// Returns an error if authentication fails or if the data is not found.
-    pub async fn post<T>(&mut self, path: &str, data: T) -> Result<(), FirebaseError>
+    pub async fn post<T>(&mut self, path: &str, data: T) -> Result<()>
     where
         T: serde::Serialize + std::fmt::Debug,
     {
@@ -133,11 +145,11 @@ impl Firebase {
             .json(&data)
             .send()
             .await
-            .map_err(|_| FirebaseError::Authentication)?;
+            .map_err(|_| Error::Authentication)?;
 
         match response.status().is_success() {
             true => Ok(()),
-            false => Err(FirebaseError::PostData),
+            false => Err(Error::PostData),
         }
     }
 
@@ -151,7 +163,7 @@ impl Firebase {
     /// # Errors
     ///
     /// Returns an error if authentication fails or if the data is not found.
-    pub async fn put<T>(&mut self, path: &str, data: T) -> Result<(), FirebaseError>
+    pub async fn put<T>(&mut self, path: &str, data: T) -> Result<()>
     where
         T: serde::Serialize + std::fmt::Debug,
     {
@@ -166,11 +178,11 @@ impl Firebase {
             .json(&data)
             .send()
             .await
-            .map_err(|_| FirebaseError::Authentication)?;
+            .map_err(|_| Error::Authentication)?;
 
         match response.status().is_success() {
             true => Ok(()),
-            false => Err(FirebaseError::PostData),
+            false => Err(Error::PostData),
         }
     }
 
@@ -183,7 +195,7 @@ impl Firebase {
     /// # Errors
     ///
     /// Returns an error if authentication fails or if the data is not found.
-    pub async fn delete(&mut self, path: &str) -> Result<(), FirebaseError> {
+    pub async fn delete(&mut self, path: &str) -> Result<()> {
         self.refresh().await?;
 
         let url = format!("{}{}.json", &self.uri, path);
@@ -194,11 +206,11 @@ impl Firebase {
             .bearer_auth(self.token.as_str())
             .send()
             .await
-            .map_err(|_| FirebaseError::Authentication)?;
+            .map_err(|_| Error::Authentication)?;
 
         match response.status().is_success() {
             true => Ok(()),
-            false => Err(FirebaseError::DeleteData),
+            false => Err(Error::DeleteData),
         }
     }
 }

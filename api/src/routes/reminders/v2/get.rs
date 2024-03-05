@@ -1,7 +1,7 @@
 //! Get method
 //!
 //! This module contains the get method for the reminders API.
-use crate::models::{generic_response::GenericResponse, reminder::Reminder};
+use crate::models::{generic_response::ResponseMessage, reminder::Reminder};
 use crate::SharedState;
 use axum::{
     extract::State,
@@ -23,8 +23,7 @@ pub async fn get(State(state): State<SharedState>) -> Response {
         Ok(d) => d.json().await,
         Err(e) => {
             log::error!("{:?}", e);
-            let error = GenericResponse::from_string(e.to_string());
-            return response::Json(error).into_response();
+            return ResponseMessage::from(e).into_response();
         }
     };
 

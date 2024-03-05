@@ -3,7 +3,7 @@ use tracing::Level;
 use tracing_subscriber::{filter, prelude::*};
 
 /// Initialise logging on inbound requests and outgoing responses.
-pub fn init_logger() {
+pub fn init() {
     let filter = filter::Targets::new()
         .with_target("tower_http::trace::on_response", Level::TRACE)
         .with_target("tower_http::trace::on_request", Level::TRACE)

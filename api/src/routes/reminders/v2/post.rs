@@ -1,12 +1,12 @@
 //! Post method
 //!
 //! This module contains the post method for the reminders API.
-use crate::models::{generic_response::GenericResponse, reminder::Reminder};
+use crate::models::{generic_response::ResponseMessage, reminder::Reminder, result::Result};
 use crate::SharedState;
 use axum::{
-    extract::{self, State},
-    http::{self, StatusCode},
-    response::{self, IntoResponse, Response},
+    extract::{Json, State},
+    http::StatusCode,
+    response::{IntoResponse, Response},
 };
 
 /// Create a new reminder.
@@ -16,25 +16,14 @@ use axum::{
 /// A JSON response with a 201 status code.
 pub async fn post(
     State(state): State<SharedState>,
-    extract::Json(reminder): extract::Json<Reminder>,
-) -> Response {
+    Json(reminder): Json<Reminder>,
+) -> Result<Response> {
     let mut db = state.write().await.db.clone();
     let resp = db.post("reminders/v2", reminder).await;
 
-    match resp {
-        Ok(_) => http::response::Builder::new()
-            .status(StatusCode::CREATED)
-            .body(
-                response::Json(GenericResponse::new("Created reminder").to_json())
-                    .into_response()
-                    .into_body(),
-            )
-            .unwrap(),
-
-        Err(e) => {
-            log::error!("{:?}", e);
-            let error = GenericResponse::from_string(e.to_string());
-            response::Json(error).into_response()
-        }
-    }
+    Ok(resp.map(|_| {
+        ResponseMessage::from("Created reminder")
+            .with_status(StatusCode::CREATED)
+            .into_response()
+    })?)
 }

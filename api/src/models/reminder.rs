@@ -72,8 +72,8 @@ impl Reminder {
                     Some(value) => match value {
                         Value::String(_) => Some(value.as_str().expect("Not a string").to_string()),
                         _ => None,
-                    }
-                }
+                    },
+                },
             })
             .collect()
     }
@@ -90,11 +90,11 @@ impl std::cmp::PartialEq for Reminder {
     ///
     /// A boolean.
     fn eq(&self, other: &Self) -> bool {
-        if (self.id == other.id) && (self.title == other.title) && (self.due == other.due) {
-            return true;
+        if self.id == other.id {
+            true
+        } else {
+            false
         }
-
-        false
     }
 }
 
@@ -146,7 +146,6 @@ mod tests {
         }];
 
         assert_eq!(r, Reminder::from_json(outer))
-
     }
 
     /// Test that a Reminder serialises properly when no ID is set.
