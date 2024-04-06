@@ -17,19 +17,10 @@ pub struct AppState {
     db: Firebase,
 }
 
-/// Entry point.
-#[tokio::main]
-async fn main() {
-    logger::init();
-
-    let firebase = Firebase::new().await;
-
-    let db = firebase.unwrap_or_else(|e| {
-        log::error!("{}", e);
-        std::process::exit(1);
-    });
-
+async fn serve() -> Result<(), String> {
+    let db = Firebase::new().await.map_err(|e| e.to_string())?;
     let state = Arc::new(RwLock::new(AppState { db }));
+
     let app = Router::new()
         .fallback(routes::err_404::handle_404)
         .route("/reminders/v2/", routes::reminders::v2::router())
@@ -37,9 +28,20 @@ async fn main() {
         .with_state(state)
         .layer(tower_http::trace::TraceLayer::new_for_http());
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:9999").await.unwrap();
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:9999").await.map_err(|e| e.to_string())?;
 
-    log::info!("listening on http://{}", listener.local_addr().unwrap());
+    log::info!("listening on http://{}", listener.local_addr().map_err(|e| e.to_string())?);
 
-    axum::serve(listener, app).await.unwrap()
+    axum::serve(listener, app).await.map_err(|e| e.to_string())
+}
+
+/// Entry point.
+#[tokio::main]
+async fn main() {
+    logger::init();
+
+    if let Err(e) = serve().await {
+        log::error!("{e}");
+        std::process::exit(1);
+    }
 }

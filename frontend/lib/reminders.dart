@@ -53,6 +53,26 @@ Future<List<Reminder>> get() async {
   return [];
 }
 
+Future<void> put(Reminder reminder) async {
+  final response = await http.put(
+    await url,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $accessToken',
+    },
+    body: reminder.toJson(),
+  );
+
+  if (response.statusCode == 401) {
+    throw RemindersApiNotAuthorizedException();
+  }
+
+  if (response.statusCode != 200) {
+    throw Exception(
+        'Failed to update reminder. ${response.statusCode}, ${response.body}');
+  }
+}
+
 Future<void> update(List<Reminder> reminders) async {
   final response = await http.patch(
     await url,
@@ -70,7 +90,7 @@ Future<void> update(List<Reminder> reminders) async {
   }
 
   if (response.statusCode != 200) {
-    throw Exception('Failed to update reminder. ${response.statusCode}');
+    throw Exception('Failed to update reminders. ${response.statusCode}');
   }
 }
 

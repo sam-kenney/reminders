@@ -54,11 +54,10 @@ class Reminder {
         'assignee': assignee,
       };
 
-  String toJson() => jsonEncode({
-        'id': id,
-        'title': title,
-        'due': due,
-        'priority': priority,
-        'assignee': assignee,
-      });
+  String toJson() => jsonEncode(toMap());
+
+  @override
+  String toString() {
+    return 'Reminder(id="$id", title="$title", due="$dueDateFmt", priority=$priority, assignee="$assignee")';
+  }
 }

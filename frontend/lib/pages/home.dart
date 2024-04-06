@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:reminders/reminders.dart' as reminders;
 import 'package:reminders/pages/add_reminder.dart';
+import 'package:reminders/pages/update_reminder.dart';
 import 'package:reminders/models/reminder.dart';
 import 'package:confetti/confetti.dart';
 
@@ -77,21 +78,45 @@ class _HomeState extends State<Home> {
       key: Key(_reminders[index].id!),
       title: Text(_reminders[index].title),
       subtitle: _reminders[index].subtitle(context),
-      trailing: IconButton(
-        icon: const Icon(Icons.check),
-        style: ButtonStyle(
-          padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
-            const EdgeInsets.fromLTRB(20, 0, 20, 0),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            style: ButtonStyle(
+              padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                const EdgeInsets.fromLTRB(20, 0, 20, 0),
+              ),
+            ),
+            onPressed: () {
+              final Reminder r = _reminders[index];
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UpdateReminder(reminder: r),
+                ),
+              ).then((_) {
+                _getReminders();
+              });
+            },
           ),
-        ),
-        onPressed: () {
-          _confetti.play();
-          final Reminder r = _reminders[index];
-          _reminders.removeAt(index);
-          reminders.delete(r).then(
-                (_) => _getReminders(),
-              );
-        },
+          IconButton(
+            icon: const Icon(Icons.check),
+            style: ButtonStyle(
+              padding: MaterialStateProperty.all<EdgeInsetsGeometry>(
+                const EdgeInsets.fromLTRB(20, 0, 20, 0),
+              ),
+            ),
+            onPressed: () {
+              _confetti.play();
+              final Reminder r = _reminders[index];
+              _reminders.removeAt(index);
+              reminders.delete(r).then(
+                    (_) => _getReminders(),
+                  );
+            },
+          ),
+        ],
       ),
     );
   }
